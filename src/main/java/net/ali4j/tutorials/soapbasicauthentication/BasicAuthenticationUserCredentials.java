@@ -1,6 +1,8 @@
 package net.ali4j.tutorials.soapbasicauthentication;
 
 import javax.validation.constraints.NotNull;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 public class BasicAuthenticationUserCredentials {
 
@@ -8,7 +10,9 @@ public class BasicAuthenticationUserCredentials {
     private String password;
 
     public BasicAuthenticationUserCredentials(@NotNull String authorizationHeader) {
-        String[] strings = authorizationHeader.substring(5).split("\\:");
+        String base64EncodedPart = authorizationHeader.substring(6);
+        String userCredentials = new String(Base64.getDecoder().decode(base64EncodedPart.getBytes(StandardCharsets.UTF_8)));
+        String[] strings = userCredentials .split("\\:");
         this.username = strings[0];
         this.password = strings[1];
     }
@@ -17,11 +21,11 @@ public class BasicAuthenticationUserCredentials {
         return username;
     }
 
-    public void setUsername(String username) {
+    void setUsername(String username) {
         this.username = username;
     }
 
-    public String getPassword() {
+    String getPassword() {
         return password;
     }
 
