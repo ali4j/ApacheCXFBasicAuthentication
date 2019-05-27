@@ -8,6 +8,7 @@ import org.apache.cxf.transport.http.AbstractHTTPDestination;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Optional;
 
 @Component
 public class BasicAuthenticationInterceptor extends AbstractPhaseInterceptor<Message> {
@@ -23,18 +24,21 @@ public class BasicAuthenticationInterceptor extends AbstractPhaseInterceptor<Mes
     public void handleMessage(Message message) throws Fault {
         HttpServletRequest request = (HttpServletRequest) message.get(AbstractHTTPDestination.HTTP_REQUEST);
 
-        String authorization = request.getHeader("Authorization");
+        Optional<String> authorizationOptional =
+                Optional.of(request.getHeader("Authorization").trim())
+                        .filter(s -> !s.isEmpty());
 
-        if (authorization == null || authorization.isEmpty())
-            unauthenticated();
-
-        else {
-
-            BasicAuthenticationUserCredentials credentials = new BasicAuthenticationUserCredentials(authorization);
-
-            if (!credentials.getUsername().equals(DEFAULT_USERNAME) || !credentials.getPassword().equals(DEFAULT_PASSWORD))
-                unauthenticated();
+        if (authorizationOptional.isPresent()) {
+            if(!checkAuthentication(authorizationOptional.get())) unauthenticated();
         }
+        else unauthenticated();
+    }
+
+    private boolean checkAuthentication(String authenticationHeaderValue) {
+        BasicAuthenticationUserCredentials credentials =
+                new BasicAuthenticationUserCredentials(authenticationHeaderValue);
+        return credentials.getUsername().equals(DEFAULT_USERNAME) && credentials.getPassword().equals(DEFAULT_PASSWORD);
+
     }
 
 
